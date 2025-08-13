@@ -13,11 +13,16 @@ from typing import List, Tuple
 import re
 
 
-def natural_sort_key(path: str):
-    """Return a key for natural sorting of filenames (e.g., 1, 2, 10)."""
-    name = os.path.basename(path).lower()
-    parts = re.split(r"(\d+)", name)
-    return [int(p) if p.isdigit() else p for p in parts]
+def natural_sort_key(path: str, root_folder: str = None):
+    """Return a key that naturally sorts by folder path components then filename (ascending)."""
+    def split_parts(s: str):
+        tokens = re.split(r"(\d+)", s.lower())
+        return tuple((0, int(p)) if p.isdigit() else (1, p) for p in tokens)
+    # Use relative path to the root folder when provided so top-level dir order comes first
+    rel_path = os.path.relpath(path, root_folder) if root_folder else os.path.normpath(path)
+    components = rel_path.split(os.sep)
+    # Sort by each component using natural ordering (numbers before letters within each token)
+    return tuple(split_parts(component) for component in components)
 
 
 class PDFCombinerCLI:
@@ -36,7 +41,7 @@ class PDFCombinerCLI:
             candidates.extend([str(p) for p in folder.glob("*.pdf")])
             candidates.extend([str(p) for p in folder.glob("*.PDF")])
         # Sort files naturally (1.pdf, 2.pdf, 10.pdf instead of 1.pdf, 10.pdf, 2.pdf)
-        candidates.sort(key=natural_sort_key)
+        candidates.sort(key=lambda p: natural_sort_key(p, folder_path))
         return candidates
     
     def get_pdf_info(self, pdf_path: str) -> Tuple[str, int]:
@@ -69,12 +74,19 @@ class PDFCombinerCLI:
             
             print(f"Starting to combine {len(pdf_files)} PDF files...")
             
+            # Ensure deterministic, hierarchical natural ordering
+            try:
+                root = os.path.commonpath(pdf_files) if pdf_files else None
+            except Exception:
+                root = None
+            pdf_files = sorted(pdf_files, key=lambda p: natural_sort_key(p, root))
+            
             # Process each PDF file
             for i, pdf_path in enumerate(pdf_files, 1):
                 if not os.path.exists(pdf_path):
                     print(f"Warning: {pdf_path} not found, skipping...")
                     continue
-                    
+                
                 try:
                     filename = os.path.basename(pdf_path)
                     print(f"Processing {i}/{len(pdf_files)}: {filename}")
