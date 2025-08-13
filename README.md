@@ -10,7 +10,7 @@ A fast, simple utility to combine multiple PDF files into a single document with
 - **Natural sorting**: `1.pdf, 2.pdf, 10.pdf` are ordered as humans expect
 - **GUI included**: Scan, review, and combine visually
 
-## Quick Start
+## Quick start
 
 ### Install
 ```bash
