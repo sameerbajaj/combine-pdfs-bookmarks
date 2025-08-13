@@ -17,10 +17,13 @@ import threading
 import re
 
 
-def natural_sort_key(path: str):
-    name = os.path.basename(path).lower()
-    parts = re.split(r"(\d+)", name)
-    return [int(p) if p.isdigit() else p for p in parts]
+def natural_sort_key(path: str, root_folder: str = None):
+    def split_parts(s: str):
+        tokens = re.split(r"(\d+)", s.lower())
+        return tuple((0, int(p)) if p.isdigit() else (1, p) for p in tokens)
+    rel_path = os.path.relpath(path, root_folder) if root_folder else os.path.normpath(path)
+    components = rel_path.split(os.sep)
+    return tuple(split_parts(component) for component in components)
 
 
 class PDFCombiner:
@@ -32,8 +35,10 @@ class PDFCombiner:
         """Find all PDF files in the specified folder."""
         pdf_pattern = os.path.join(folder_path, "*.pdf")
         pdf_files = glob.glob(pdf_pattern)
+        # Also include uppercase extension
+        pdf_files += glob.glob(os.path.join(folder_path, "*.PDF"))
         # Sort files naturally (1.pdf, 2.pdf, 10.pdf instead of 1.pdf, 10.pdf, 2.pdf)
-        pdf_files.sort(key=natural_sort_key)
+        pdf_files.sort(key=lambda p: natural_sort_key(p, folder_path))
         return pdf_files
     
     def get_pdf_info(self, pdf_path: str) -> Tuple[str, int]:
@@ -54,12 +59,19 @@ class PDFCombiner:
             writer = PdfWriter()
             current_page = 0
             
+            # Ensure deterministic, hierarchical natural ordering
+            try:
+                root = os.path.commonpath(pdf_files) if pdf_files else None
+            except Exception:
+                root = None
+            pdf_files = sorted(pdf_files, key=lambda p: natural_sort_key(p, root))
+            
             # Process each PDF file
             for pdf_path in pdf_files:
                 if not os.path.exists(pdf_path):
                     print(f"Warning: {pdf_path} not found, skipping...")
                     continue
-                    
+                
                 try:
                     with open(pdf_path, 'rb') as file:
                         reader = PdfReader(file)
@@ -262,6 +274,8 @@ class PDFCombinerGUI:
         for item in selected_items:
             values = self.pdf_tree.item(item, "values")
             selected_pdfs.append(values[2])  # Full path is in column 2
+        # Ensure deterministic order regardless of GUI selection order
+        selected_pdfs.sort(key=lambda p: natural_sort_key(p, self.selected_folder))
         
         # Get output path
         output_filename = self.output_var.get()
