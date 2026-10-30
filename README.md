@@ -102,3 +102,7 @@ python3 pdf_combiner_cli.py test_pdfs
 
 ## License
 This utility is provided as-is for personal and educational use.
+
+---
+
+Part of the open-source tools collection by [Sameer Bajaj](https://sameerbajaj.com). Learn more on the [project page](https://sameerbajaj.com/tools/combine-pdfs/).

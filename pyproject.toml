@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "combine-pdfs-bookmarks"
+version = "1.0.0"
+description = "Merge multiple PDFs into one document with automatic bookmarks for navigation"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Sameer Bajaj", email = "sameer@sameerbajaj.com"}
+]
+keywords = ["pdf", "combine", "merge", "bookmarks", "toc"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "PyPDF2>=3.0.0",
+    "reportlab>=3.6.0",
+]
+
+[project.urls]
+Homepage = "https://sameerbajaj.com/tools/combine-pdfs/"
+Repository = "https://github.com/sameerbajaj/combine-pdfs-bookmarks"
